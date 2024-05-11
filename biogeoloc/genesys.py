@@ -3,6 +3,7 @@ import numpy as np
 import re
 from toolbiox.lib.common.math.set import merge_same_element_set
 from toolbiox.lib.xuyuxing.map.base import haversine
+from toolbiox.lib.common.os import cmd_run
 from biogeoloc.cls import Accession, AccessionSet
 import time
 
@@ -75,8 +76,8 @@ def load_genesys_dir(genesys_metadata_dir):
 
     genesys_core_file = genesys_metadata_dir + "/core.csv"
     genesys_names_file = genesys_metadata_dir + "/names.csv"
-    # geo file need add a comma at the end of the frist line
-    # sed '1s/$/,/' geo.csv > geo_new.csv
+    cmd_string = "sed '1s/$/,/' geo.csv > geo_new.csv"
+    cmd_run(cmd_string, cwd=genesys_metadata_dir, silence=True)
     genesys_geo_file = genesys_metadata_dir + "/geo_new.csv"
 
     genesys_core = pd.read_csv(genesys_core_file)
