@@ -20,12 +20,14 @@ class GeneSysAccSet(AccessionSet):
             'is_id': list,
         }
 
-        default_passport_items = {
-            'local_adapted': bool,
-        }
+        # default_passport_items = {
+        #     'local_adapted': bool,
+        # }
 
+        # super(GeneSysAccSet, self).__init__(name=name, date=date,
+        #                                     default_ID_items=default_ID_items, default_passport_items=default_passport_items)
         super(GeneSysAccSet, self).__init__(name=name, date=date,
-                                            default_ID_items=default_ID_items, default_passport_items=default_passport_items)
+                                            default_ID_items=default_ID_items)
 
     def load(self, genesys_metadata_dir):
         # 载入数据目录
@@ -56,7 +58,7 @@ class GeneSysAccSet(AccessionSet):
             s = Accession(           
                           lat=row.lat,
                           lon=row.lon,
-                          passport={"local_adapted": row.local_adapted},
+                        #   passport={"local_adapted": row.local_adapted},
                           sources=['Genesys'],
                           pi_id_list=pi_id_list,
                           is_id_list=is_id_list,
@@ -263,9 +265,10 @@ def return_one_gs_group(gs_id_list, genesys_df, gs2pi_dict, gs2is_dict, exclude_
     is_id_list = [i for i in is_id_list if i not in exclude_id_list]
 
     coord = get_coord_from_gs_id_list(gs_id_list, genesys_df)
-    local_adapted_flag = if_local_adapted(gs_id_list, genesys_df)
+    # local_adapted_flag = if_local_adapted(gs_id_list, genesys_df)
 
-    return {"pi_id": ",".join(pi_id_list), "is_id": ",".join(is_id_list), "gs_id": ",".join([str(i) for i in gs_id_list]), "lat": coord[0] if coord else None, "lon": coord[1] if coord else None, "local_adapted": local_adapted_flag}
+    # return {"pi_id": ",".join(pi_id_list), "is_id": ",".join(is_id_list), "gs_id": ",".join([str(i) for i in gs_id_list]), "lat": coord[0] if coord else None, "lon": coord[1] if coord else None, "local_adapted": local_adapted_flag}
+    return {"pi_id": ",".join(pi_id_list), "is_id": ",".join(is_id_list), "gs_id": ",".join([str(i) for i in gs_id_list]), "lat": coord[0] if coord else None, "lon": coord[1] if coord else None}
 
 
 def parse_duplicated_ids(id_map_group, genesys_df, gs2pi_dict, gs2is_dict):

@@ -165,7 +165,7 @@ Sources: %s
 
 
 class AccessionSet:
-    def __init__(self, name, date, default_ID_items={}, default_passport_items={}, default_phenotypic_items={}, default_dataset_items={}, default_properties_items={}):
+    def __init__(self, name, date=None, default_ID_items={}, default_passport_items={}, default_phenotypic_items={}, default_dataset_items={}, default_properties_items={}):
         """
         items is a dict to store the default items for the accession
         example:
@@ -178,7 +178,8 @@ class AccessionSet:
         """
 
         self.name = name
-        self.date = date
+        self.date = date if date else time.strftime(
+            "%Y-%m-%d %H:%M:%S", time.localtime())
         self.default_ID_items = default_ID_items
         self.default_passport_items = default_passport_items
         self.default_phenotypic_items = default_phenotypic_items
@@ -359,14 +360,10 @@ class AccessionSet:
             for uniq_id in self.accession_dict:
                 if self.default_ID_items[id_type] is list:
                     for id_tmp in self.accession_dict[uniq_id].IDs[id_type]:
-                        if id_tmp in IDs2uniq_id[id_type]:
-                            print("Warning: %s is duplicated" % id_tmp)
-                        IDs2uniq_id[id_type][id_tmp] = uniq_id
+                        IDs2uniq_id[id_type].setdefault(id_tmp, []).append(uniq_id)
                 else:
                     id_tmp = self.accession_dict[uniq_id].IDs[id_type]
-                    if id_tmp in IDs2uniq_id[id_type]:
-                        print("Warning: %s is duplicated" % id_tmp)
-                    IDs2uniq_id[id_type][id_tmp] = uniq_id
+                    IDs2uniq_id[id_type].setdefault(id_tmp, []).append(uniq_id)
 
         self.index = IDs2uniq_id
 
@@ -377,26 +374,26 @@ class AccessionSet:
 
     def search(self, q_id, id_type=None):
         if q_id is None:
-            return None
+            return []
 
         id_type_list = [id_type] if id_type else list(
             self.default_ID_items.keys())
-        uniq_id = None
+        uniq_id_list = []
 
         for id_type in id_type_list:
             if q_id in self.index[id_type]:
-                uniq_id = self.index[id_type][q_id]
+                uniq_id_list = self.index[id_type][q_id]
                 break
 
-        return uniq_id
+        return uniq_id_list
 
     def search_with_priority(self, id_list):
-        uniq_id = None
+        uniq_id_list = []
         for q_id in id_list:
-            uniq_id = self.search(q_id)
-            if uniq_id:
+            uniq_id_list = self.search(q_id)
+            if uniq_id_list:
                 break
-        return uniq_id
+        return uniq_id_list
 
     def search_by_id_list(self, id_list):
         uniq_id_dict = {q_id: self.search(q_id)
@@ -613,7 +610,7 @@ def merge_accession(acc1, acc2):
     return new_acc
 
 
-def merge_accession_sets(AS1, AS2, search_id_type_list, new_set_name=None, new_set_date=None, skip_multihits=True):
+def merge_accession_sets(AS1, AS2, search_id_type_list, new_set_name=None, new_set_date=None):
     """
     Merge two accession sets
     - AS1 have the higher priority
@@ -682,6 +679,7 @@ def merge_accession_sets(AS1, AS2, search_id_type_list, new_set_name=None, new_s
 
     for as2_uniq_id in AS2.accession_dict:
         as2_acc = AS2.accession_dict[as2_uniq_id]
+
         search_id_list = []
         for t in search_id_type_list:
             if t in AS2.default_ID_items:
@@ -690,39 +688,17 @@ def merge_accession_sets(AS1, AS2, search_id_type_list, new_set_name=None, new_s
                     search_id_list += as2_id
                 else:
                     search_id_list.append(as2_id)
-        search_id_list = list(set(search_id_list))
 
-        # as1_id_dict = AS1.search_by_id_list(search_id_list)
-
-        # as1_uniq_id_list = []
-        # for i in as1_id_dict:
-        #     as1_acc = AS1.accession_dict[as1_id_dict[i]]
-        #     as1_uniq_id_list.append(as1_acc.uniq_id)
-        # as1_uniq_id_list = list(set(as1_uniq_id_list))
-
-        # hit_id_in_AS1 = None
-        # if len(as1_uniq_id_list) == 0:
-        #     AS.add(as2_acc)
-        # elif len(as1_uniq_id_list) == 1:
-        #     hit_id_in_AS1 = as1_uniq_id_list[0]
-        # else:
-        #     if skip_multihits:
-        #         print(
-        #             "Warning: %s has multiple hits in AS1, it will be skipped" % as2_uniq_id)
-        #         continue
-        #     else:
-        #         hit_id_in_AS1 = as1_uniq_id_list[0]
-
-        hit_id_in_AS1 = AS1.search_with_priority(search_id_list)
-        if hit_id_in_AS1 is None:
+        as1_uniq_id_list = AS1.search_with_priority(search_id_list)
+        if len(as1_uniq_id_list) == 0:
             AS.add(as2_acc)
-
-        if hit_id_in_AS1 and hit_id_in_AS1 not in modified_AS1_uniq_id:
-            as1_acc = AS1.accession_dict[hit_id_in_AS1]
+        elif len(as1_uniq_id_list) == 1 and as1_uniq_id_list[0] not in modified_AS1_uniq_id:
+            as1_uniq_id = as1_uniq_id_list[0]
+            as1_acc = AS1.accession_dict[as1_uniq_id]
             new_acc = merge_accession(as1_acc, as2_acc)
             AS.add(new_acc)
-            modified_AS1_uniq_id.append(hit_id_in_AS1)
-
+            modified_AS1_uniq_id.append(as1_uniq_id)
+        
     modified_AS1_uniq_id = set(modified_AS1_uniq_id)
     for as1_uniq_id in AS1.accession_dict:
         if as1_uniq_id not in modified_AS1_uniq_id:
