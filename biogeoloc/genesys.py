@@ -43,16 +43,17 @@ class GeneSysAccSet(AccessionSet):
               (len(genesys_df), len(non_dup_df), len(coord_contradictory_list), len(georefed_genesys_df)))
 
         # 生成Accession对象, 并添加到AccessionSet中
-        uniq_num = 0
-        uniq_id_format = "u%%0%dd" % len(str(len(non_dup_df)))
+        # uniq_num = 0
+        # uniq_id_format = "u%%0%dd" % len(str(len(non_dup_df)))
         for i in range(len(non_dup_df)):
             row = non_dup_df.iloc[i]
             pi_id_list = row.pi_id.split(",") if len(row.pi_id) > 0 else []
             is_id_list = row.is_id.split(",") if len(row.is_id) > 0 else []
             gs_id_list = row.gs_id.split(",") if len(row.gs_id) > 0 else []
 
-            uniq_id = uniq_id_format % uniq_num
-            s = Accession(uniq_id,
+            # uniq_id = uniq_id_format % uniq_num
+            # s = Accession(uniq_id,
+            s = Accession(           
                           lat=row.lat,
                           lon=row.lon,
                           passport={"local_adapted": row.local_adapted},
@@ -61,15 +62,18 @@ class GeneSysAccSet(AccessionSet):
                           is_id_list=is_id_list,
                           genesys_id_list=gs_id_list,
                           )
-            uniq_num += 1
+            # uniq_num += 1
 
             self.add(s)
 
 
 # PI_ID_format = r'PI ?\d+[A-Z]?'
-# IS_ID_format = r'IS ?\d+[A-Z]?'
-PI_ID_format = r'PI ?\d+'
-IS_ID_format = r'IS ?\d+'
+# IS_ID_format = r'^IS ?\d+[A-Z]?$'
+# PI_ID_format = r'^PI ?\d+$'
+# IS_ID_format = r'IS ?\d+'
+# IS_ID_format = re.compile(r'IS ?\d+[A-Z]?')
+IS_ID_format = re.compile(r'^IS ?\d+[A-Z]?$')
+PI_ID_format = re.compile(r'^(PI ?\d+)$|^Duplicate of (PI ?\d+)$')
 
 
 def load_genesys_dir(genesys_metadata_dir):
@@ -185,16 +189,21 @@ def cluster_all_ids(genesys_df):
 
         for name in name_list:
             # PI ID
-            refinder = re.findall(PI_ID_format, name)
-            for pi_id in refinder:
-                pi_id = pi_id.replace(" ", "")
-                pi_id_list.append(pi_id)
+            refinder = PI_ID_format.match(name)
+            if refinder:
+                for pi_id in refinder.groups():
+                    if pi_id is None:
+                        continue
+                    pi_id = pi_id.replace(" ", "")
+                    pi_id_list.append(pi_id)
 
             # IS ID
-            refinder = re.findall(IS_ID_format, name)
-            for is_id in refinder:
+            refinder = IS_ID_format.match(name)
+            if refinder:
+                is_id = refinder.group()
                 is_id = is_id.replace(" ", "")
                 is_id_list.append(is_id)
+
 
         id_map.append([genesys_id])
         if len(pi_id_list):
