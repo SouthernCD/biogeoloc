@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 import re
-from toolbiox.lib.common.math.set import merge_same_element_set
-from toolbiox.lib.xuyuxing.map.base import haversine
-from toolbiox.lib.common.os import cmd_run
+from yxmath.set import merge_same_element_set
+from yxmap import haversine
+from yxutil import cmd_run
 from biogeoloc.cls import Accession, AccessionSet
 import time
 

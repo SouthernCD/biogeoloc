@@ -10,10 +10,10 @@ setuptools.setup(
     version=get_versions(),
     author="Yuxing Xu",
     author_email="xuyuxing@mail.kib.ac.cn",
-    description="A python package for plotting correlations between variants and environmental factors.",
+    description="A python object package for storing and managing geographic information about biological samples.",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    url="https://github.com/SouthernCD/GeoGenoPlot",
+    url="https://github.com/SouthernCD/biogeoloc",
     include_package_data = True,
 
     # entry_points={
@@ -23,9 +23,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     install_requires=[
-        "toolbiox>=0.0.46",
-        "plotbiox>=0.0.2",
-        "cyvcf2>=0.30.28"
+        "yxmath",
+        "yxmap",
+        "yxutil",
+        "pandas",
+        "numpy",
     ],
 
     python_requires='>=3.5',
